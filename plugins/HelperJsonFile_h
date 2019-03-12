@@ -1,0 +1,27 @@
+#ifndef _HELPERJSONFILE_H_
+#define _HELPERJSONFILE_H_
+
+/**
+ * Includes. 
+ */
+#include <ArduinoJson.h>
+#include <string>
+
+
+/**
+ * Helper : JSON File reader.
+ */
+class HelperJsonFile
+{
+private:
+    char*               pFileContent;
+    DynamicJsonBuffer   buffer;
+    JsonObject*         pJsonObject;
+
+public:
+    HelperJsonFile(std::string filename);
+    ~HelperJsonFile();
+    JsonObject* GetJsonObject();
+};
+
+#endif

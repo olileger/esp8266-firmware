@@ -1,0 +1,130 @@
+/**
+ * Includes. 
+ */
+#include "ControllerHttpClient.h"
+#include <ESP8266HTTPClient.h>
+#include <ESP8266WiFi.h>
+#include "HelperLog.h"
+#include "HelperTypes.h"
+
+
+/**
+ * Constructor.
+ */
+ControllerHttpClient::ControllerHttpClient(std::string configFilename):
+cfg(configFilename)
+{
+}
+
+/**
+ * Destructor.
+ */
+ControllerHttpClient::~ControllerHttpClient()
+{
+}
+
+/**
+ * Execute the request.
+ */
+void ControllerHttpClient::Execute(DatabaseTokens& db)
+{
+    if (this->cfg.GetTlsUse())
+    {
+        this->ExecuteWithWiFiClientSecure(db);
+    }
+    else
+    {
+        this->ExecuteWithHTTPClient(db);
+    }
+}
+
+/**
+ * Execute the request by using HTTPClient lib.
+ */
+void ControllerHttpClient::ExecuteWithHTTPClient(DatabaseTokens& db)
+{
+    // Setup the HTTPClient.
+    std::string url = std::string("http://" + this->cfg.GetHost() +
+                                  ":" + HelperTypes::IntToString(this->cfg.GetPort()) +
+                                  db.ReplaceTokenByValue(this->cfg.GetRequestPath()));
+
+    HTTPClient c;
+    if (!c.begin(url.c_str()))
+    {
+        HelperLog::LogInfo("[HTTP] Begin failed for " + url);
+        return;
+    }
+
+    // Setup the headers.
+    for (HttpClientRequestHeadersIterator itHeader = this->cfg.GetRequestHeaders().begin();
+         itHeader != this->cfg.GetRequestHeaders().end();
+         itHeader++)
+    {
+        c.addHeader(itHeader->first.c_str(), db.ReplaceTokenByValue(itHeader->second).c_str(), false, true);
+    }
+
+    // Replace the body tokens by values.
+    std::string body = db.ReplaceTokenByValue(this->cfg.GetRequestBody());
+
+    // Send.
+    int status = 0;
+    if (this->cfg.GetRequestMethod().compare("POST") == 0)
+    {
+        status = c.POST(body.c_str());
+    }
+    else if (this->cfg.GetRequestMethod().compare("PUT") == 0)
+    {
+        status = c.sendRequest("PUT", body.c_str());
+    }
+    if (status < 0)
+    {
+        HelperLog::LogInfo("[HTTP] Request " + this->cfg.GetRequestMethod() +
+                           " send with result " + HelperTypes::IntToString(status));
+    }
+}
+
+/**
+ * Execute the request by using WiFiClientSecure lib.
+ */
+void ControllerHttpClient::ExecuteWithWiFiClientSecure(DatabaseTokens& db)
+{
+    // Setup the WiFiClientSecure.
+    WiFiClientSecure c;
+    if (!c.connect(this->cfg.GetHost().c_str(), this->cfg.GetPort()))
+    {
+        HelperLog::LogInfo("[HTTP] Connection to " + this->cfg.GetHost() + ":" + 
+                           HelperTypes::IntToString(this->cfg.GetPort()) + " failed");
+        return;
+    }
+
+    // Check the TLS thumbprint.
+    if (this->cfg.GetTlsThumbprint().length() > 0 &&
+        !c.verify(this->cfg.GetTlsThumbprint().c_str(), this->cfg.GetHost().c_str()))
+    {
+        HelperLog::LogInfo("[HTTP] Failed to verify thumbprint " + this->cfg.GetTlsThumbprint());
+        return;
+    }
+
+    // Setup the headers.
+    std::string payload = this->cfg.GetRequestMethod() + " " + this->cfg.GetRequestPath() + " HTTP/1.1\r\n";
+    for (HttpClientRequestHeadersIterator itHeader = (HttpClientRequestHeadersIterator)this->cfg.GetRequestHeaders().begin();
+         itHeader != this->cfg.GetRequestHeaders().end();
+         itHeader++)
+    {
+        payload += itHeader->first + ": " + itHeader->second + "\r\n";
+    }
+
+    // Replace the payload tokens by values.
+    std::string body = db.ReplaceTokenByValue(this->cfg.GetRequestBody());
+    payload += "Content-Length: " + HelperTypes::IntToString(body.length()) + "\r\n\r\n";
+    payload += body;
+    payload = db.ReplaceTokenByValue(payload);
+
+    // Send.
+    int sz = 0;
+    sz = c.print(payload.c_str());
+    if (sz != payload.length())
+    {
+        HelperLog::LogInfo("[HTTP] Sent " + HelperTypes::IntToString(sz) + " bytes of " + HelperTypes::IntToString(payload.length()));
+    }
+}

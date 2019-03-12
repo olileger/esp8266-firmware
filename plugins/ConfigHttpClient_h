@@ -1,0 +1,65 @@
+#ifndef _CONFIGHTTPCLIENT_H_
+#define _CONFIGHTTPCLIENT_H_
+
+/**
+ * Includes. 
+ */
+#include <map>
+#include <string>
+#include "ConfigBase.h"
+#include "HelperIniFile.h"
+
+
+/**
+ * TLS descriptor.
+ */
+struct HttpClientTls
+{
+    bool        use;
+    std::string thumbprint;
+};
+
+/**
+ * HTTP Request descriptor.
+ */
+typedef std::map<std::string, std::string>              HttpClientRequestHeaders;
+typedef std::map<std::string, std::string>::iterator    HttpClientRequestHeadersIterator;
+typedef std::pair<std::string, std::string>             HttpClientRequestHeader;
+
+struct HttpClientRequest
+{
+    std::string                 method;
+    std::string                 path;
+    HttpClientRequestHeaders    headers;
+    std::string                 body;
+};
+
+/**
+ * Config : HTTP Client.
+ */
+class ConfigHttpClient : public ConfigBase
+{
+private:
+    std::string         host;
+    unsigned short      port;
+    HttpClientTls       tls;
+    HttpClientRequest   request;
+
+protected:
+    void                        ReadValues();
+    
+public:
+    ConfigHttpClient(HelperIniFile& file);
+    ~ConfigHttpClient();
+    
+    std::string                 GetHost() const;
+    unsigned short              GetPort() const;
+    bool                        GetTlsUse() const;
+    std::string                 GetTlsThumbprint() const;
+    std::string                 GetRequestMethod() const;
+    std::string                 GetRequestPath() const;
+    HttpClientRequestHeaders&   GetRequestHeaders();
+    std::string                 GetRequestBody() const;
+};
+
+#endif

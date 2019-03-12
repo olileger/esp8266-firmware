@@ -1,0 +1,30 @@
+#ifndef _CONTROLLERHTTPCLIENT_H_
+#define _CONTROLLERHTTPCLIENT_H_
+
+/**
+ * Includes. 
+ */
+#include <map>
+#include <string>
+#include "ConfigHttpClient.h"
+#include "DatabaseTokens.h"
+
+
+/**
+ * Controller : HTTP client.
+ */
+class ControllerHttpClient
+{
+private:
+    ConfigHttpClient cfg;
+
+    void        ExecuteWithHTTPClient(DatabaseTokens& db);
+    void        ExecuteWithWiFiClientSecure(DatabaseTokens& db);
+
+public:
+    ControllerHttpClient(std::string configFilename = "/config.ini");
+    ~ControllerHttpClient();
+    void Execute(DatabaseTokens& db);
+};
+
+#endif

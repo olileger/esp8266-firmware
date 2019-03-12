@@ -1,0 +1,65 @@
+/**
+ * Includes. 
+ */
+#include "HelperJsonFile.h"
+#include <FS.h>
+#include "HelperLog.h"
+#include "HelperTypes.h"
+
+
+/**
+ * Constructor. 
+ */ 
+HelperJsonFile::HelperJsonFile(std::string filename):
+pFileContent(NULL),
+buffer(),
+pJsonObject(NULL)
+{
+    // Open the file.
+    SPIFFS.begin();
+    File f = SPIFFS.open(filename.c_str(), "r");
+    if (!f)
+    {
+        HelperLog::LogDebug(filename + " doesn't exist");
+        return;
+    }
+
+    // Read the content.
+    HelperLog::LogInfo("File " + filename + " found : " + HelperTypes::IntToString(f.size()) + " bytes");
+    this->pFileContent = (char*)malloc(f.size() + 1);
+    int sz = f.readBytes(this->pFileContent, f.size());
+    if (sz != f.size())
+    {
+        HelperLog::LogDebug("Sz = " + HelperTypes::IntToString(sz) + " / File size = " + HelperTypes::IntToString(f.size()));
+    }
+    else
+    {
+        // Map to a JSON representation.
+        this->pFileContent[sz] = '\0';
+        this->pJsonObject = &(this->buffer.parseObject(this->pFileContent));
+        if (!this->pJsonObject->success())
+        {
+            HelperLog::LogDebug("Failed parsing " + filename + " to JSON object");
+        }
+    }
+
+    // Close the file.
+    f.close();
+}
+
+/**
+ * Destructor. 
+ */
+HelperJsonFile::~HelperJsonFile()
+{
+    // Free up the memory.
+    free(this->pFileContent);
+}
+
+/**
+ * Returns the JSON Object. 
+ */
+JsonObject* HelperJsonFile::GetJsonObject()
+{
+    return this->pJsonObject;
+}

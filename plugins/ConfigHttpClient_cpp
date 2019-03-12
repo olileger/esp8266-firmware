@@ -1,0 +1,122 @@
+/**
+ * Includes. 
+ */
+#include "ConfigHttpClient.h"
+#include "HelperLog.h"
+#include "HelperTypes.h"
+
+
+/**
+ * Constructor. 
+ */
+ConfigHttpClient::ConfigHttpClient(std::string filename):
+ConfigBase(filename),
+host("Undefined"),
+port(12345),
+tls(),
+request()
+{
+    ConfigBase::Read();
+}
+
+/**
+ * Destructor. 
+ */
+ConfigHttpClient::~ConfigHttpClient()
+{
+}
+
+/**
+ * Read the values.
+ */
+void ConfigHttpClient::ReadValues()
+{
+    /*
+    this->host = o["host"].asString();
+    this->port = o["port"];
+
+    // TLS.
+    this->tls.use = o["tls"]["use"];
+    this->tls.thumbprint = o["tls"]["thumbprint"].asString();
+
+    // Request.
+    this->request.method = o["request"]["method"].asString();
+    this->request.path = o["request"]["path"].asString();
+
+    JsonArray& array = o["request"]["headers"];
+    for (int i = 0; i < array.size(); i++)
+    {
+        JsonObject& tmp = array[i];
+        for (JsonObject::iterator it = tmp.begin(); it != tmp.end(); ++it)
+        {
+            this->request.headers.insert(HttpClientRequestHeader(it->key, it->value.asString()));
+        }
+    }
+
+    this->request.body = o["request"]["body"].asString();
+    */
+}
+
+/**
+ * Returns the host.
+ */
+std::string ConfigHttpClient::GetHost() const
+{
+    return this->host;
+}
+
+/**
+ * Returns the port.
+ */
+unsigned short ConfigHttpClient::GetPort() const
+{
+    return this->port;
+}
+
+/**
+ * Returns the TLS use.
+ */
+bool ConfigHttpClient::GetTlsUse() const
+{
+    return this->tls.use;
+}
+
+/**
+ * Returns the TLS thumbprint.
+ */
+std::string ConfigHttpClient::GetTlsThumbprint() const
+{
+    return this->tls.thumbprint;
+}
+
+/**
+ * Returns the request method.
+ */
+std::string ConfigHttpClient::GetRequestMethod() const
+{
+    return this->request.method;
+}
+
+/**
+ * Returns the request path.
+ */
+std::string ConfigHttpClient::GetRequestPath() const
+{
+    return this->request.path;
+}
+
+/**
+ * Returns the request headers.
+ */
+HttpClientRequestHeaders& ConfigHttpClient::GetRequestHeaders()
+{
+    return this->request.headers;
+}
+
+/**
+ * Returns the request body.
+ */
+std::string ConfigHttpClient::GetRequestBody() const
+{
+    return this->request.body;
+}
